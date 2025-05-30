@@ -162,18 +162,19 @@ npm run start:dev
 ### Auth Service (`auth-service/.env.example`)
 ```
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/auth-service
-JWT_ACCESS_SECRET=your-access-secret
-JWT_REFRESH_SECRET=your-refresh-secret
-RABBITMQ_URL=amqp://localhost:5672
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+JWT_ACCESS_EXPIRATION=3600s
+JWT_REFRESH_EXPIRATION=7d
+MONGODB_URI=mongodb://mongodb:27017/auth-db
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
 ```
 
 ### Product Service (`product-service/.env.example`)
 ```
 PORT=3001
-MONGODB_URI=mongodb://localhost:27017/product-service
-RABBITMQ_URL=amqp://localhost:5672
-AUTH_SERVICE_URL=http://localhost:3000
+MONGODB_URI=mongodb://mongodb:27017/product-db
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
 ```
 
 ---
