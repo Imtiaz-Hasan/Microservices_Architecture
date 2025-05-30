@@ -61,10 +61,15 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     const message = { token };
 
     return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Auth service did not respond in time'));
+      }, 5000); // 5 seconds timeout
+
       this.channel.consume(
         queue,
         (msg) => {
           if (msg && msg.properties.correlationId === correlationId) {
+            clearTimeout(timeout);
             const content = JSON.parse(msg.content.toString());
             resolve(content);
             this.channel.cancel(msg.fields.consumerTag);
