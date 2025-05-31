@@ -1,6 +1,7 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqplib';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
@@ -8,7 +9,10 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private channel!: amqp.Channel;
   private readonly logger = new Logger(RabbitMQService.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(forwardRef(() => AuthService)) private readonly authService: AuthService,
+  ) {}
 
   async onModuleInit() {
     try {
@@ -21,6 +25,30 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.channel = await this.connection.createChannel();
 
       this.logger.log('✅ Connected to RabbitMQ');
+
+      // --- Add consumer for auth.validate-token ---
+      await this.channel.assertExchange('auth_service', 'topic', { durable: true });
+      const { queue } = await this.channel.assertQueue('auth_service_queue', { durable: false });
+      await this.channel.bindQueue(queue, 'auth_service', 'auth.validate-token');
+
+      this.channel.consume(queue, async (msg) => {
+        if (msg) {
+          try {
+            const { token } = JSON.parse(msg.content.toString());
+            const result = await this.authService.validateToken(token);
+            this.channel.sendToQueue(
+              msg.properties.replyTo,
+              Buffer.from(JSON.stringify(result)),
+              { correlationId: msg.properties.correlationId }
+            );
+            this.channel.ack(msg);
+          } catch (err) {
+            this.logger.error('Error processing token validation:', err);
+            this.channel.ack(msg);
+          }
+        }
+      });
+      // --- End consumer ---
     } catch (error) {
       this.logger.error('❌ Failed to connect to RabbitMQ:', error);
       throw error;
