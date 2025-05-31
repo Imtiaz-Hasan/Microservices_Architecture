@@ -16,7 +16,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (!token) throw new UnauthorizedException('No token provided');
     const result = await this.rabbitMQService.rpcValidateToken(token);
     if (!result || !result.valid) throw new UnauthorizedException('Invalid token');
-    request.user = result.user;
+    const user = result.user;
+    request.user = {
+      userId: user._id || user.id || user.userId,
+      email: user.email,
+      role: user.role,
+      // add other fields if needed
+    };
     return true;
   }
 
