@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -36,17 +36,25 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto) {
-    const user = await this.usersService.create(createUserDto);
-    const { password, ...result } = user.toObject();
+    try {
+      const user = await this.usersService.create(createUserDto);
+      const { password, ...result } = user.toObject();
 
-    // Publish user created event
-    await this.rabbitMQService.publish('user.created', {
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    });
+      // Publish user created event
+      await this.rabbitMQService.publish('user.created', {
+        userId: user._id,
+        email: user.email,
+        role: user.role,
+      });
 
-    return result;
+      return result;
+    } catch (error) {
+      // Handle duplicate email error (MongoDB duplicate key error code is 11000)
+      if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
+        throw new BadRequestException('Email is already registered');
+      }
+      throw error;
+    }
   }
 
   async refreshToken(refreshToken: string) {
