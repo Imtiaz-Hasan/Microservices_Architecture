@@ -27,7 +27,8 @@
     "class-validator": "^0.14.0",
     "class-transformer": "^0.5.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.0",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -41,7 +42,6 @@
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
-    "tsconfig-paths": "^4.2.1",
     "typescript": "^5.0.0"
   }
 } 
