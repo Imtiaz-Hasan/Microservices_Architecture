@@ -36,6 +36,24 @@ services:
       - microservices-network
     restart: unless-stopped
 
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    env_file:
+      - ./order-service/.env
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - auth-service
+    volumes:
+      - order_node_modules:/app/node_modules
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -67,6 +85,7 @@ volumes:
   rabbitmq_data:
   auth_node_modules:
   product_node_modules:
+  order_node_modules:
 
 networks:
   microservices-network:
