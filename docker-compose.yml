@@ -54,6 +54,18 @@ services:
       - microservices-network
     restart: unless-stopped
 
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "3003:3000"
+    environment:
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/inventory
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    depends_on:
+      - mongo
+      - rabbitmq
+
   mongodb:
     image: mongo:latest
     container_name: mongodb
